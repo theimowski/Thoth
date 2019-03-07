@@ -1,2 +1,3 @@
-FSharp.Core
-Newtonsoft.Json
+group net40
+    FSharp.Core
+    Newtonsoft.Json

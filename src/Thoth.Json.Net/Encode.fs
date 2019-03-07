@@ -385,7 +385,7 @@ module Encode =
             else
                 let fullname = t.GetGenericTypeDefinition().FullName
                 if fullname = typedefof<obj option>.FullName then
-                    let encoder = t.GenericTypeArguments.[0] |> autoEncoder extra isCamelCase
+                    let encoder = genericTypeArgument t 0 |> autoEncoder extra isCamelCase
                     boxEncoder(fun (value: obj) ->
                         if isNull value then nil
                         else
@@ -393,10 +393,10 @@ module Encode =
                             encoder.Encode fields.[0])
                 elif fullname = typedefof<obj list>.FullName
                     || fullname = typedefof<Set<string>>.FullName then
-                    t.GenericTypeArguments.[0] |> autoEncoder extra isCamelCase |> genericSeq
+                    genericTypeArgument t 0 |> autoEncoder extra isCamelCase |> genericSeq
                 elif fullname = typedefof< Map<string, obj> >.FullName then
-                    let keyType = t.GenericTypeArguments.[0]
-                    let valueType = t.GenericTypeArguments.[1]
+                    let keyType = genericTypeArgument t 0
+                    let valueType = genericTypeArgument t 1
                     let valueEncoder = valueType |> autoEncoder extra isCamelCase
                     let kvProps = typedefof<KeyValuePair<obj,obj>>.MakeGenericType(keyType, valueType).GetProperties()
                     match keyType with
@@ -404,8 +404,8 @@ module Encode =
                         boxEncoder(fun (value: obj) ->
                             let target = JObject()
                             for kv in value :?> System.Collections.IEnumerable do
-                                let k = kvProps.[0].GetValue(kv)
-                                let v = kvProps.[1].GetValue(kv)
+                                let k = kvProps.[0].GetValue(kv, null)
+                                let v = kvProps.[1].GetValue(kv, null)
                                 target.[toString k] <- valueEncoder.Encode v
                             target :> JsonValue)
                     | _ ->
@@ -413,8 +413,8 @@ module Encode =
                         boxEncoder(fun (value: obj) ->
                             let target = JArray()
                             for kv in value :?> System.Collections.IEnumerable do
-                                let k = kvProps.[0].GetValue(kv)
-                                let v = kvProps.[1].GetValue(kv)
+                                let k = kvProps.[0].GetValue(kv, null)
+                                let v = kvProps.[1].GetValue(kv, null)
                                 target.Add(JArray [|keyEncoder.Encode k; valueEncoder.Encode v|])
                             target :> JsonValue)
                 else

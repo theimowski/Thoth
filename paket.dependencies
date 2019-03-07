@@ -17,6 +17,12 @@ nuget Giraffe
 nuget Fulma
 nuget Fable.Promise
 
+group net40
+    source https://www.nuget.org/api/v2
+    framework: net40
+    nuget Newtonsoft.Json 9.0.1
+    nuget FSharp.Core 3.1.2.5 redirects:force
+
 # Save Newtonsoft pkg in repo dir so we
 # can access it with F# interactive
 group newtonsoft

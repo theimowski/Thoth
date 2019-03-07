@@ -840,6 +840,7 @@ module Decode =
             else
                 let values = value.Value<JArray>()
                 let ucis = FSharpType.GetUnionCases(t, allowAccessToPrivateRepresentation=true)
+
                 let empty = FSharpValue.MakeUnion(ucis.[0], [||], allowAccessToPrivateRepresentation=true)
                 (values, Ok empty) ||> Seq.foldBack (fun value acc ->
                     match acc with
@@ -859,8 +860,8 @@ module Decode =
         else None
 
     let rec private genericMap extra isCamelCase (t: System.Type) =
-        let keyType   = t.GenericTypeArguments.[0]
-        let valueType = t.GenericTypeArguments.[1]
+        let keyType   = genericTypeArgument t 0
+        let valueType = genericTypeArgument t 1
         let valueDecoder = autoDecoder extra isCamelCase false valueType
         let keyDecoder = autoDecoder extra isCamelCase false keyType
         let tupleType = typedefof<obj * obj>.MakeGenericType([|keyType; valueType|])
@@ -974,13 +975,13 @@ module Decode =
             else
                 let fullname = t.GetGenericTypeDefinition().FullName
                 if fullname = typedefof<obj option>.FullName then
-                    autoDecoder extra isCamelCase true t.GenericTypeArguments.[0] |> genericOption t |> boxDecoder
+                    autoDecoder extra isCamelCase true (genericTypeArgument t 0) |> genericOption t |> boxDecoder
                 elif fullname = typedefof<obj list>.FullName then
-                    autoDecoder extra isCamelCase false t.GenericTypeArguments.[0] |> genericList t |> boxDecoder
+                    autoDecoder extra isCamelCase false (genericTypeArgument t 0) |> genericList t |> boxDecoder
                 elif fullname = typedefof< Map<string, obj> >.FullName then
                     genericMap extra isCamelCase t |> boxDecoder
                 elif fullname = typedefof< Set<string> >.FullName then
-                    let t = t.GenericTypeArguments.[0]
+                    let t = (genericTypeArgument t 0)
                     let decoder = autoDecoder extra isCamelCase false t
                     boxDecoder(fun path value ->
                         match array decoder.BoxedDecoder path value with
